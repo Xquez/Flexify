@@ -1,0 +1,113 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for user data and allows public read access to membership plans and gym classes.
+ *
+ * Data Structure:
+ * - /membership_plans/{membershipPlanId}: Stores membership plan details (publicly readable).
+ * - /users/{userId}: Stores user profile information, accessible only by the user themselves.
+ * - /gym_classes/{gymClassId}: Stores gym class details (publicly readable).
+ * - /attendances/{attendanceId}: Stores attendance records, accessible only by the user who attended.
+ * - /users/{userId}/notifications/{notificationId}: Stores notifications for individual users, accessible only by the user themselves.
+ *
+ * Key Security Decisions:
+ * - Users can only read and write their own user documents.
+ * - Membership plans and gym classes are publicly readable.
+ * - Listing of users is disallowed.
+ * - Attendance records are accessible only by the user who attended.
+ * - Notifications are restricted to the owning user.
+ *
+ * Denormalization for Authorization:
+ *  - Attendance records are secured using the userId field.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows public read access to membership plans. Write access is not permitted in this prototype.
+     * @path /membership_plans/{membershipPlanId}
+     * @allow (get, list) Anyone can read membership plans.
+     * @deny (create, update, delete) No one can create, update, or delete membership plans.
+     * @principle Allows public read access to membership plans.
+     */
+    match /membership_plans/{membershipPlanId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Enforces user-ownership for user documents.
+     * @path /users/{userId}
+     * @allow (get, update, delete) User with matching UID can read, update, and delete their own document.
+     * @allow (create) User can create their own document if the UID matches the document ID.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's document.
+     * @deny (create) User cannot create a document with a mismatched UID.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data.
+     */
+    match /users/{userId} {
+      allow get, update, delete: if isOwner(userId) && resource != null;
+      allow create: if isOwner(userId);
+      allow list: if false;
+    }
+
+    /**
+     * @description Allows public read access to gym classes. Write access is not permitted in this prototype.
+     * @path /gym_classes/{gymClassId}
+     * @allow (get, list) Anyone can read gym classes.
+     * @deny (create, update, delete) No one can create, update, or delete gym classes.
+     * @principle Allows public read access to gym classes.
+     */
+    match /gym_classes/{gymClassId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Enforces user-ownership for attendance records.
+     * @path /attendances/{attendanceId}
+     * @allow (get, update, delete) User with matching UID can read, update, and delete their own attendance records.
+     * @allow (create) User can create their own attendance records if the UID matches the document's userId.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's attendance records.
+     * @deny (create) User cannot create an attendance record with a mismatched UID.
+     * @principle Enforces document ownership for attendance records and restricts access to a user's own data.
+     */
+    match /attendances/{attendanceId} {
+      allow get, update, delete: if isAttendanceOwner(resource.data.userId) && resource != null;
+      allow create: if isAttendanceOwner(request.resource.data.userId);
+      allow list: if isAttendanceOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for notifications.
+     * @path /users/{userId}/notifications/{notificationId}
+     * @allow (get, update, delete) User with matching UID can read, update, and delete their own notifications.
+     * @allow (create) User can create notifications under their own user document.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's notifications.
+     * @deny (create) User cannot create notifications under another user's document.
+     * @principle Enforces document ownership for notifications and restricts access to a user's own data.
+     */
+    match /users/{userId}/notifications/{notificationId} {
+      allow get, update, delete: if isOwner(userId) && resource != null;
+      allow create: if isOwner(userId);
+      allow list: if isOwner(userId);
+    }
+
+    /**
+     * @description Helper function to check if the request is made by the owner of the resource.
+     * @param {string} userId The user ID to compare against the request's auth UID.
+     * @return {boolean} True if the user ID matches the request's auth UID, false otherwise.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+     /**
+     * @description Helper function to check if the request is made by the owner of the attendance record.
+     * @param {string} userId The user ID to compare against the request's auth UID.
+     * @return {boolean} True if the user ID matches the request's auth UID, false otherwise.
+     */
+    function isAttendanceOwner(userId) {
+      return request.auth.uid == userId;
+    }
+  }
+}

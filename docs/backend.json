@@ -1,0 +1,271 @@
+{
+  "entities": {
+    "MembershipPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MembershipPlan",
+      "type": "object",
+      "description": "Represents a gym membership plan with details like name, price, duration, and description.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the membership plan."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the membership plan (e.g., 'Basic', 'Premium')."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the membership plan."
+        },
+        "durationDays": {
+          "type": "number",
+          "description": "Duration of the membership plan in days."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the membership plan and its benefits."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "price",
+        "durationDays",
+        "description"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the gym management system, including members, trainers, and admins.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user (same as Firebase Auth UID)."
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (e.g., 'admin', 'trainer', 'member').",
+          "enum": ["admin", "trainer", "member"]
+        },
+        "membershipId": {
+          "type": "string",
+          "description": "Reference to MembershipPlan."
+        },
+        "joinDate": {
+            "type": "string",
+            "format": "date"
+        },
+        "status": {
+            "type": "string",
+            "enum": ["Active", "Inactive", "Pending"]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role",
+        "joinDate"
+      ]
+    },
+    "GymClass": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GymClass",
+      "type": "object",
+      "description": "Represents a gym class with details like name, trainer, schedule, and capacity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the gym class."
+        },
+        "className": {
+          "type": "string",
+          "description": "Name of the gym class (e.g., 'Yoga', 'Zumba')."
+        },
+        "trainerName": {
+          "type": "string",
+          "description": "Name of the trainer conducting the class."
+        },
+        "dateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time of the class in ISO 8601 format."
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of the class in minutes."
+        },
+        "maxMembers": {
+          "type": "number",
+          "description": "Maximum number of members that can enroll in the class."
+        },
+        "enrolledMembers": {
+            "type": "number",
+            "description": "Number of members currently enrolled in the class."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time when the class was created."
+        }
+      },
+      "required": [
+        "id",
+        "className",
+        "trainerName",
+        "dateTime",
+        "duration",
+        "maxMembers",
+        "enrolledMembers",
+        "createdAt"
+      ]
+    },
+    "Attendance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Attendance",
+      "type": "object",
+      "description": "Represents the attendance record of a member for a specific class or gym access.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attendance record."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User."
+        },
+        "classId": {
+          "type": "string",
+          "description": "Reference to GymClass."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the attendance record.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Attendance status",
+          "enum": [
+            "Present",
+            "Absent"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "classId",
+        "date",
+        "status"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification sent to a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the notification."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message of the notification."
+        },
+        "sentDate": {
+          "type": "string",
+          "description": "Date and time when the notification was sent.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "message",
+        "sentDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/membership_plans/{membershipPlanId}",
+        "definition": {
+          "entityName": "MembershipPlan",
+          "schema": {
+            "$ref": "#/backend/entities/MembershipPlan"
+          },
+          "description": "Stores membership plan details."
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information."
+        }
+      },
+      {
+        "path": "/schedules/{scheduleId}",
+        "definition": {
+          "entityName": "GymClass",
+          "schema": {
+            "$ref": "#/backend/entities/GymClass"
+          },
+          "description": "Stores gym class schedules and details."
+        }
+      },
+      {
+        "path": "/attendances/{attendanceId}",
+        "definition": {
+          "entityName": "Attendance",
+          "schema": {
+            "$ref": "#/backend/entities/Attendance"
+          },
+          "description": "Stores attendance records for members in gym classes."
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores notifications for individual users."
+        }
+      }
+    ]
+  }
+}
