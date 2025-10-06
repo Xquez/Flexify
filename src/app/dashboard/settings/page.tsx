@@ -18,7 +18,9 @@ import type { Metadata } from "next";
 // };
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme();
+  // const { theme, setTheme } = useTheme();
+  const { theme, systemTheme, setTheme } = useTheme();
+  const currentTheme = theme === 'system' ? systemTheme : theme;
   return (
     <div className="grid gap-6">
       <Card>
@@ -40,7 +42,8 @@ export default function SettingsPage() {
             </div>
             <Switch
               id="dark-mode"
-              checked={theme === 'dark'}
+              // checked={theme === 'dark'}
+              checked={currentTheme === 'dark'}
               onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
             />
           </div>
