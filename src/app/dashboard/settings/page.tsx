@@ -63,7 +63,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Established</span>
-            <span>2024</span>
+            <span>2025</span>
           </div>
         </CardContent>
       </Card>
