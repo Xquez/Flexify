@@ -63,6 +63,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/data';
 import type { GymClass } from '../schedule/page';
 
+export const dynamic = "force-dynamic";
+
 export type Attendance = {
   id: string;
   userId: string;
@@ -74,6 +76,7 @@ export type Attendance = {
 export default function AttendancePage() {
   const { firestore, user: currentUser } = useFirebase();
   const { toast } = useToast();
+  const currentUserUid = currentUser?.uid;
 
   const isAdmin = currentUser?.email === 'admin@gmail.com';
 
@@ -82,7 +85,8 @@ export default function AttendancePage() {
     if (isAdmin) {
       return collection(firestore, 'attendances');
     }
-    return query(collection(firestore, 'attendances'), where('userId', '==', currentUser?.uid));
+    if (!currentUserUid) return null; // skip query if user not logged in yet
+    return query(collection(firestore, 'attendances'), where('userId', '==', currentUserUid));
   }, [firestore, currentUser, isAdmin]);
 
   const { data: attendance, isLoading } = useCollection<Attendance>(attendanceQuery);
